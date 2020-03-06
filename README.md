@@ -32,8 +32,8 @@ The purpose of SECSUITE is to allow easy workflows & automated threat management
 - Network Latency Monitor
 - Users Monitor
 - System Dashboard (to view the data from the above monitored sensors)
-To install locally, use the local installers in SECSUITE/inframon/
-To install on another node, use the SECSUITE/inframon/node-install/ installers, depending on the installation type you choose.
+
+To install Inframon, execute "SECSUITE/inframon/complete-local-setup.sh"; You will have the option to install the local installers or add a new Remote Node.
 
 #### File Management:
 <p align="center">
