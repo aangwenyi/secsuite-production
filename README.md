@@ -4,7 +4,7 @@
 
 # SECSUITE BETA Release v1.2
 
-## Created & Maintained by Systèmes Securitech Systems
+## Created & Maintained by Daniel Ward
 The purpose of SECSUITE is to allow easy workflows & automated threat management to UNIX Systems Administrators.
 
 ### Within SECSUITE Free Tier:
