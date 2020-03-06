@@ -937,8 +937,10 @@ rm dbfile.txt
 userstemplate="/root/scripts/SECSUITE/inframon/node-install/users-monitor.template"
 sed -i "s/mysqluser='MYMYSQLUSR'/mysqluser='$mysqluser'/g" $userstemplate
 sed -i "s/mysqlpass='MYMYSQLPASS'/mysqlpass='$mysqlpass'/g" $userstemplate
+sed -i "s/host='MYHOSTHERE'/host='$ipaddr'/g" $userstemplate
 rsync -avzh -e "ssh -p $rhostport" $userstemplate $sudousr@$ipaddr:/root/scripts/SECSUITE/inframon/ --quiet
 ssh -p $rhostport $sudousr@$ipaddr "mv /root/scripts/SECSUITE/inframon/users-monitor.template /root/scripts/SECSUITE/inframon/users-monitor.sh"
+sed -i "s/host='$ipaddr'/host='MYHOSTHERE'/g" $userstemplate
 sed -i "s/mysqluser='$mysqluser'/mysqluser='MYMYSQLUSR'/g" $userstemplate
 sed -i "s/mysqlpass='$mysqlpass'/mysqlpass='MYMYSQLPASS'/g" $userstemplate
 
