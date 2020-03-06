@@ -40,4 +40,4 @@ mysql --user=$user --password=$pass -e "use status;select * from loggedusers;" 2
 
 echo ""
 echo "Displaying actively monitored connected users: "
-mysql --user=$user --password=$pass -e "use status;select * from hist_loggedusers order by importtime desc;" 2>/dev/null
+mysql --user=$user --password=$pass -e "use status;select * from hist_loggedusers order by importtime desc limit 1;" 2>/dev/null
