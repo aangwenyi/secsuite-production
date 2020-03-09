@@ -15,7 +15,6 @@ The purpose of SECSUITE is to allow easy workflows & automated threat management
 - Network Latency Monitor
 - Users Monitor
 
-### Available upon purchasing SECSUITE Premium: 
 #### Ubuntu & Debian hosts
 
 #### SECSUITE Inframon Advanced:
@@ -31,6 +30,7 @@ The purpose of SECSUITE is to allow easy workflows & automated threat management
 - CPU Monitor (Load Avg & Temperatures).
 - Network Latency Monitor
 - Users Monitor
+- Network Auto-Discovery Installation Included
 - System Dashboard (to view the data from the above monitored sensors)
 
 To install Inframon, execute "SECSUITE/inframon/complete-local-setup.sh"; You will have the option to install the local installers or add a new Remote Node.
