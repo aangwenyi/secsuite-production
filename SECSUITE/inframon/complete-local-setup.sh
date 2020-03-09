@@ -118,8 +118,8 @@ case $CHOICE in
         while true; do
             read -p "Do you wish to store the monitoring data locally on this server (Y) or on the node itself (N)? (Y/n): " yn
             case $yn in
-                [Yy]* ) bash /root/scripts/SECSUITE/inframon/auto-discover-store-on-server.sh; break;;
-                [Nn]* ) bash /root/scripts/SECSUITE/inframon/auto-discover-store-on-node.sh; break;;
+                [Yy]* ) bash /root/scripts/SECSUITE/inframon/node-install/auto-discover-store-on-server.sh; break;;
+                [Nn]* ) bash /root/scripts/SECSUITE/inframon/node-install/auto-discover-store-on-node.sh; break;;
                 * ) echo "Please answer yes or no.";;
             esac
         done
