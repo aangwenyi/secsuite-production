@@ -67,12 +67,13 @@ CREATE TABLE `hist_cpu` (
 --
 
 CREATE TABLE `loggedusers` (
-  `id` int(11) NOT NULL,
-  `username` varchar(255) DEFAULT NULL,
-  `pts` varchar(10) DEFAULT NULL,
-  `date` varchar(20) DEFAULT NULL,
-  `time` varchar(20) DEFAULT NULL,
-  `ipaddr` varchar(50) DEFAULT NULL
+  `hostname` varchar(255) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `pts` varchar(10) NOT NULL,
+  `date` varchar(20) NOT NULL,
+  `time` varchar(20) NOT NULL,
+  `ipaddr` varchar(50) NOT NULL,
+  `random` varchar(255) NOT NULL,
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -82,7 +83,7 @@ CREATE TABLE `loggedusers` (
 --
 
 CREATE TABLE `hist_loggedusers` (
-  `id` int(11) NOT NULL,
+  `hostname` varchar(255) NOT NULL,
   `username` varchar(255) DEFAULT NULL,
   `pts` varchar(10) DEFAULT NULL,
   `date` varchar(20) DEFAULT NULL,
@@ -121,32 +122,6 @@ CREATE TABLE `hist_srv` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `temperature`
---
-
-CREATE TABLE `temperature` (
-  `id` int(11) NOT NULL,
-  `hostname` varchar(255) DEFAULT NULL,
-  `temperatures` varchar(1024) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `hist_temperature`
---
-
-CREATE TABLE `hist_temperature` (
-  `id` int(11) NOT NULL,
-  `hostname` varchar(255) DEFAULT NULL,
-  `temperatures` varchar(1024) DEFAULT NULL,
-  `importtime` varchar(255) NOT NULL,
-  `random` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
 -- Indexes for table `apachestatus`
 --
 ALTER TABLE `apachestatus`
@@ -178,7 +153,7 @@ ALTER TABLE `hist_cpu`
 -- Indexes for table `loggedusers`
 --
 ALTER TABLE `loggedusers`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`random`);
   
 --
 -- Indexes for table `hist_loggedusers`
@@ -198,20 +173,6 @@ ALTER TABLE `srv`
 -- Indexes for table `hist_srv`
 --
 ALTER TABLE `hist_srv`
-  ADD PRIMARY KEY (`random`);
-
--- --------------------------------------------------------
-
---
--- Indexes for table `temperature`
---
-ALTER TABLE `temperature`
-  ADD PRIMARY KEY (`id`);
-  
---
--- Indexes for table `hist_temperature`
---
-ALTER TABLE `hist_temperature`
   ADD PRIMARY KEY (`random`);
 
 -- --------------------------------------------------------
