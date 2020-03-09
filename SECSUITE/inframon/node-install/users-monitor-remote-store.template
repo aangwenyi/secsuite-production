@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+#Welcome to another hacky script by Daniel W
+#
+#Load in the users information on the Securitech Sysmon Console
+#
+#Begin
+#
+#Load in the variables;
+whofile="whofile.txt"
+whofile1="whofile1.txt"
+importfile="/var/lib/mysql-files/importfileusers.csv"
+tempbuild="tempbuild.txt"
+mysqluser='MYMYSQLUSR'
+mysqlpass='MYMYSQLPASS'
+host='MYHOSTHERE'
+procrhostport='MYPORTHERE'
+procsudousr='MYSUDOUSRHERE'
+hostname='MYHOSTNAMEHERE'
+#
+who > $whofile
+cp $whofile $whofile1
+#cat $whofile1
+string=$(date +%b)
+if grep -q $string "$whofile1"; then
+# echo "Month: $string"
+ cat $whofile | awk '{print $1, "," $2, "," $3, $4, "," $5, "," $6, ","}' >> $importfile ; rm $whofile
+fi
+if grep -q "-" "$whofile1"; then
+# echo "Datestamp: $string"
+ cat $whofile | awk '{print $1, "," $2, "," $3, "," $4, "," $5, "," $6}' >> $importfile ; rm $whofile
+fi
+#
+cat $importfile >> $tempbuild
+rm $importfile $whofile1
+input="$tempbuild"
+while IFS= read -r line
+do
+  rand=$(shuf -i 0-1000000000000 -n 1)
+  echo "$(echo $hostname), $line $(echo $rand)" >> $importfile
+done < "$input"
+#cat $importfile
+#Truncate the table first
+mysql -h $host --user=$mysqluser --password=$mysqlpass -e "USE status; truncate table loggedusers;" 2>/dev/null
+#Debug if cells don't match in above awk:
+#cat /var/lib/mysql-files/importfile.csv
+rsync -avzh -e "ssh -p $procrhostport" /var/lib/mysql-files/importfileusers.csv $procsudousr@$host:/var/lib/mysql-files/ --quiet
+#Load the new data
+mysql -h $host --user=$mysqluser --password=$mysqlpass -e "USE status; LOAD DATA INFILE '/var/lib/mysql-files/importfileusers.csv' INTO TABLE loggedusers FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (hostname,username,pts,date,time,ipaddr,random);" 2>/dev/null
+#Load into Historical
+mysql -h $host --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO hist_loggedusers SELECT hostname, username, pts, date, time, ipaddr, CURRENT_TIMESTAMP(), RAND() FROM loggedusers;" 2>/dev/null
+ssh -p $procrhostport $procsudousr@$host 'rm /var/lib/mysql-files/importfileusers.csv'
+#Remove the source file
+rm $importfile $tempbuild
