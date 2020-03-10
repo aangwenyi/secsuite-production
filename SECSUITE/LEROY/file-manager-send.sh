@@ -63,7 +63,7 @@ read -p "Please enter the SSH Username of the remote host: " rhostsshuser
 while true; do
     read -p "Are you running SSH on port 22? (Y/n): " yn
     case $yn in
-        [Yy]* ) echo "$rhost $rhostip 22 $rhostsshuser" break;;
+        [Yy]* ) rhostport="22" ; echo "$rhost $rhostip 22 $rhostsshuser" ; break;;
         [Nn]* ) read -p "Please insert the port number: " rhostport ; break;;
         * ) echo "Please answer yes or no.";;
     esac
