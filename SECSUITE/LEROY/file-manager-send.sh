@@ -27,8 +27,8 @@ FILE="/root/scripts/SECSUITE/LEROY/serverlist.conf"
 if [ -f "$FILE" ]; then
 #
 printf "+ ${green}Server list file found${nc}. continuing...\n"
-read -p "Please select the file to be sent (from this host): " sendfile
-read -p "Enter directory (full path (example: '/var/www/html/yoursite/')) to deploy to (on the remote server):  " deployloc
+read -p "Please select the file to be sent (from this host (full path)): " sendfile
+read -p "Enter directory (full path) to deploy on the remote server: " deployloc
 unset option menu ERROR      # prevent inheriting values from the shell
 declare -a menu              # create an array called $menu
 menu[0]=""                   # set and ignore index zero so we can count from 1
@@ -97,8 +97,8 @@ do
         *) echo "invalid option $REPLY";;
     esac
 done
-read -p "Please select the file to be sent (from this host): " sendfile
-read -p "Enter directory (full path (example: '/var/www/html/yoursite/')) to deploy to (on the remote server):  " deployloc
+read -p "Please select the file to be sent (from this host (full path)): " sendfile
+read -p "Enter directory (full path) to deploy on the remote server: " deployloc
 unset option menu ERROR      # prevent inheriting values from the shell
 declare -a menu              # create an array called $menu
 menu[0]=""                   # set and ignore index zero so we can count from 1
