@@ -126,7 +126,7 @@ filenumname="file$filenum='"
 webfilename=$(echo "file$filenum='/root/scripts/SECSUITE/inframon/tempfiles/file$filenum.csv'")
 #echo "Web File Name:"
 #echo $webfilename
-sed -i "/$filenumname/a $webfilename" /root/scripts/SECSUITE/inframon/net-monitor.sh
+#sed -i "/$filenumname/a $webfilename" /root/scripts/SECSUITE/inframon/net-monitor.sh
 #echo "Your Web file inside the script:"
 #cat /root/scripts/SECSUITE/inframon/net-monitor.sh | grep -E "$webfilename"
 #SSH Maths:
@@ -140,7 +140,7 @@ filenumnamessh="file$filenumssh='"
 sshfilename=$(echo "file$filenumssh='/root/scripts/SECSUITE/inframon/tempfiles/file$filenumssh.csv'")
 #echo "SSH File Name:"
 #echo $sshfilename
-sed -i "/$filenumnamessh/a $sshfilename" /root/scripts/SECSUITE/inframon/net-monitor.sh
+#sed -i "/$filenumnamessh/a $sshfilename" /root/scripts/SECSUITE/inframon/net-monitor.sh
 #echo "Your SSH file inside the script:"
 #cat /root/scripts/SECSUITE/inframon/net-monitor.sh | grep -E "$sshfilename"
 #**************************
