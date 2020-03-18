@@ -75,7 +75,7 @@ echo '        #printf "+  Status file created: ${lightgreen}OK${nc}\n\n"' >> $co
 echo "#" >> $constructfile
 #
 echo "Checking database for entries..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
 if grep -q apachestatus "dbfile.txt"; then
         printf "${green} Table 'status.apachestatus' exists, continuing...${nc}\n"
         echo "Getting new ID for $hostname..."
