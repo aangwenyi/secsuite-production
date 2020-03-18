@@ -95,7 +95,7 @@ rm dbfile.txt dbidnums.txt
 echo 'if grep -q "active (running)" "$ statusfile"; then' >> $constructfile
 echo 'cat $ statusfile | grep -E "Active" > $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
-echo "sed -i '1 i\ $i, VPS-SP-HQ-01,' $ statusfile1" >> $constructfile
+echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> qry1.txt
 echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> qry1.txt
@@ -109,7 +109,7 @@ echo 'fi' >> $constructfile
 echo 'if grep -q "inactive (dead)" "$ statusfile"; then' >> $constructfile
 echo 'echo "Apache Server is Offline!" >> $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
-echo "sed -i '1 i\ $i, VPS-SP-HQ-01,' $ statusfile1" >> $constructfile
+echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> qry1.txt
 echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> qry1.txt
