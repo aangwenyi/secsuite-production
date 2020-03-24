@@ -43,7 +43,7 @@ clear
 case $CHOICE in
         1)
 
-        bash /root/scripts/SECSUITE/inframon/apache-monitor-installer.sh
+        bash /root/scripts/SECSUITE/inframon/apache-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
         echo #
@@ -79,7 +79,7 @@ case $CHOICE in
 
         4)
 
-        bash /root/scripts/SECSUITE/inframon/net-install.sh
+        bash /root/scripts/SECSUITE/inframon/latency-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
         echo #
