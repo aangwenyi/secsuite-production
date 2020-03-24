@@ -21,7 +21,7 @@ cat $readfileone | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|
 #create a unique list of addresses
 sort $readfiletwo | uniq > $nlf
 #Uncomment to keep logs:
-#cat $nlf > $basedir/production.log
+cat $nlf > $basedir/production.log
 rm $readfileone $readfiletwo $nlf
 sort /root/scripts/SECSUITE/livemon/*.log* | uniq > /root/scripts/SECSUITE/livemon/uniqips.txt
 #clear previous(ssh)
@@ -33,7 +33,7 @@ mysql --user=$mysqluser --password=$mysqlpass -e "USE livemon;select ipaddr INTO
 cp /var/lib/mysql-files/final.txt /root/scripts/SECSUITE/livemon/
 echo ''
 echo 'SSH Attackers Count: '
-mysql --user=$mysqluser --password=$mysqlpass -e "USE livemon;select count(*) from iplist;" 2>/dev/null
+mysql --user=$mysqluser --password=$mysqlpass -e "USE livemon;select count(*) as Unique_Attackers from iplist;" 2>/dev/null
 echo ''
 rm final.txt
 exit
