@@ -7,195 +7,205 @@
 #|____/|_____\____|____/ \___/|___| |_| |_____|
 #       CPU-TEMPERATURE-MONITOR
 #
-mysqluser="USER"
-mysqlpass="PASS"
-hostname="HOST"
+#DO NOT CHANGE MANUALLY:
+#Use the installer
+mysqluser='user'
+mysqlpass='pass'
+hostname='host'
+ipaddr="127.0.0.1"
+#########################
 #ASCII Colours
 red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
 #
+temptemp="/root/scripts/SECSUITE/inframon/temperaturefiles/tempfile.txt"
+tempcores="/root/scripts/SECSUITE/inframon/temperaturefiles/tempcores.csv"
+coresrefined="/root/scripts/SECSUITE/inframon/temperaturefiles/coresrefined.csv"
+corelines="/root/scripts/SECSUITE/inframon/temperaturefiles/corelines.txt"
+dbfile="/root/scripts/SECSUITE/inframon/temperaturefiles/dbfile.txt"
+dbidnums="/root/scripts/SECSUITE/inframon/temperaturefiles/dbidnums.txt"
+basedir="/root/scripts/SECSUITE/inframon/temperaturefiles"
+qry1="/root/scripts/SECSUITE/inframon/temperaturefiles/qry1.txt"
+qry2="/root/scripts/SECSUITE/inframon/temperaturefiles/qry2.txt"
+qry3="/root/scripts/SECSUITE/inframon/temperaturefiles/qry3.txt"
+qry4="/root/scripts/SECSUITE/inframon/temperaturefiles/qry4.txt"
+qry5="/root/scripts/SECSUITE/inframon/temperaturefiles/qry5.txt"
 #
 #Get the Temps
-sensors >> temptemp.txt
+sensors >> $temptemp
 #Get only the temp values
-cat temptemp.txt | grep -E "Core" >> tempcores.csv
+cat $temptemp | grep -E "Core" >> $tempcores
 #Refine
-sed -i 's/,/ /g' tempcores.csv
-sed -r 's/.{32}$//' tempcores.csv > coresrefined.csv
-sed -i 's/(//g' coresrefined.csv
-sed -i 's/)//g' coresrefined.csv
-sed -i 's/+//g' coresrefined.csv
-sed -i 's/°C//g' coresrefined.csv
-#cat coresrefined.csv
+sed -i 's/,/ /g' $tempcores
+sed -r 's/.{32}$//' $tempcores > $coresrefined
+sed -i 's/(//g' $coresrefined
+sed -i 's/)//g' $coresrefined
+sed -i 's/+//g' $coresrefined
+sed -i 's/°C//g' $coresrefined
+#cat $coresrefined
 #echo "---------"
-wc -l coresrefined.csv > corelines.txt
-sed -i 's/coresrefined.csv//g' corelines.txt
+#wc -l $coresrefined > $corelines
+cat $coresrefined | wc -l > $corelines
+#cat $corelines
+#sed -i "s/\/root\/scripts\/SECSUITE\/inframon\/temperaturefiles\/coresrefined.csv\//g" $corelines
 #echo "Existing Cores on Machine:"
-#cat corelines.txt
-localcores=$(cat corelines.txt)
-rm tempcores.csv temptemp.txt
+#cat $corelines
+localcores=$(cat $corelines)
+rm $tempcores $temptemp
 #echo ""
 #Check if table exists in the status db:
 #echo "Checking for previous installs..."
-mysqlshow --user="$mysqluser" --password="$mysqlpass" status >> dbfile.txt 2>/dev/null
-if grep -q "temperature-$hostname" "dbfile.txt"; then
+mysqlshow --user="$mysqluser" --password="$mysqlpass" status >> $dbfile 2>/dev/null
+if grep -q "temperature-$hostname" "/root/scripts/SECSUITE/inframon/temperaturefiles/dbfile.txt"; then
         #printf "${green} Table 'status.temperature-$hostname' exists, continuing...${nc}\n"
         table="$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)temperature-$hostname$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)"
-        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> qry1.txt
-        echo '"' >> qry1.txt
-        echo "USE status;INSERT INTO " >> qry1.txt
-        echo "$table" >> qry1.txt
-        echo " " >> qry1.txt
-        echo 'VALUES (' >> qry1.txt
+        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> $qry1
+        echo '"' >> $qry1
+        echo "USE status;INSERT INTO " >> $qry1
+        echo "$table" >> $qry1
+        echo " " >> $qry1
+        echo 'VALUES (' >> $qry1
         #echo "Getting new ID for $hostname..."
         #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
-        mysql -h"$ipaddr" -D'status' --user="$mysqluser" --password="$mysqlpass" -e "SELECT ID FROM \`temperature-$hostname\`;" > dbidnums.txt 2>/dev/null
-        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        mysql -h"$ipaddr" -D'status' --user="$mysqluser" --password="$mysqlpass" -e "SELECT ID FROM \`temperature-$hostname\`;" > $dbidnums 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' $dbidnums)
         #Add one to make it acceptable
         ((i++))
         #printf "+ The new ID has been generated: ${green} $i ${nc}\n"
-        echo "'$i', '$hostname', " >> qry1.txt
-        tr -d "\n" < qry1.txt > qry2.txt
-        sed -i 's/:       /\,      /g' coresrefined.csv
-        sed -i 's/\,//g' coresrefined.csv
-        input="coresrefined.csv"
+        echo "'$i', '$hostname', " >> $qry1
+        tr -d "\n" < $qry1 > $qry2
+        sed -i 's/:       /\,      /g' $coresrefined
+        sed -i 's/\,//g' $coresrefined
+        input=$coresrefined
         while IFS= read -r line
         do
-          echo "$line" | awk '{print "'\''"$3"'\''" " ," }' >> qry2.txt
+          echo "$line" | awk '{print "'\''"$3"'\''" " ," }' >> $qry2
         done < "$input"
-        tr -d "\n" < qry2.txt >> qry3.txt
-        grep -Po '.*(?=,$)' qry3.txt >> qry4.txt
-        echo ');" 2>/dev/null' >> qry4.txt
-        echo "" >> qry4.txt
-        tr -d "\n" < qry4.txt >> qry5.txt
-        echo "" >> qry5.txt
-        mv qry5.txt insertintodb.sh
+        tr -d "\n" < $qry2 >> $qry3
+        grep -Po '.*(?=,$)' $qry3 >> $qry4
+        echo ');" 2>/dev/null' >> $qry4
+        echo "" >> $qry4
+        tr -d "\n" < $qry4 >> $qry5
+        echo "" >> $qry5
+        mv $qry5 $basedir/insertintodb.sh
         mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;TRUNCATE \`temperature-$hostname\`;" 2>/dev/null
-        chmod 755 insertintodb.sh ; bash insertintodb.sh
-        rm qry1.txt qry2.txt qry3.txt qry4.txt insertintodb.sh dbidnums.txt corelines.txt coresrefined.csv
+        chmod 755 $basedir/insertintodb.sh ; bash $basedir/insertintodb.sh
+        rm $qry1 $qry2 $qry3 $qry4 $basedir/insertintodb.sh $dbidnums $corelines
         #mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;SELECT * FROM \`temperature-$hostname\`;" 2>/dev/null
-        mysqlshow --user="$mysqluser" --password="$mysqlpass" status >> dbfile.txt 2>/dev/null
-        if grep -q "hist-temperature-$hostname" "dbfile.txt"; then
+        mysqlshow --user="$mysqluser" --password="$mysqlpass" status >> $dbfile 2>/dev/null
+        if grep -q "hist-temperature-$hostname" "$dbfile"; then
                 mysql --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO \`hist-temperature-$hostname\` SELECT *, RAND(), CURRENT_TIMESTAMP() FROM \`temperature-$hostname\`;" 2>/dev/null
                 #mysql --user=$mysqluser --password=$mysqlpass -e "USE status; SELECT * FROM \`hist-temperature-$hostname\`;" 2>/dev/null
-                rm coresrefined.csv
-
+                rm $coresrefined
             else
-
                 table="$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)hist-temperature-$hostname$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)"
-                echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> qry1.txt
-                echo '"' >> qry1.txt
-                echo "USE status;CREATE TABLE IF NOT EXISTS " >> qry1.txt
-                echo "$table" >> qry1.txt
-                echo " " >> qry1.txt
-                echo "(id int(11) NOT NULL, hostname varchar(255) DEFAULT NULL, " >> qry1.txt
-                sed -i 's/:       /\,      /g' coresrefined.csv
-                sed -i 's/Core /Core/g' coresrefined.csv
+                echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> $qry1
+                echo '"' >> $qry1
+                echo "USE status;CREATE TABLE IF NOT EXISTS " >> $qry1
+                echo "$table" >> $qry1
+                echo " " >> $qry1
+                echo "(id int(11) NOT NULL, hostname varchar(255) DEFAULT NULL, " >> $qry1
+                sed -i 's/:       /\,      /g' $coresrefined
+                sed -i 's/Core /Core/g' $coresrefined
                 echo ''
-                sed -i 's/\,//g' coresrefined.csv
-                input="coresrefined.csv"
+                sed -i 's/\,//g' $coresrefined
+                input=$coresrefined
                 while IFS= read -r line
                 do
-                  echo "$line" | awk '{print $1 " varchar(255) NOT NULL," }' >> qry1.txt
+                  echo "$line" | awk '{print $1 " varchar(255) NOT NULL," }' >> $qry1
                 done < "$input"
-                echo "random varchar(255) NOT NULL, importtime varchar(255) NOT NULL," >> qry1.txt
-                echo 'PRIMARY KEY (random));" 2>/dev/null'>> qry1.txt
+                echo "random varchar(255) NOT NULL, importtime varchar(255) NOT NULL," >> $qry1
+                echo 'PRIMARY KEY (random));" 2>/dev/null'>> $qry1
                 echo ''
-                tr -d '\n' < qry1.txt >> qry2.txt
-                echo "" >> qry2.txt
+                tr -d '\n' < $qry1 >> $qry2
+                echo "" >> $qry2
 
-                mv qry2.txt create-hist-table.sh ; chmod 755 create-hist-table.sh ; bash create-hist-table.sh ; rm qry1.txt create-hist-table.sh coresrefined.csv
+                mv $qry2 $basedir/create-hist-table.sh ; chmod 755 $basedir/create-hist-table.sh ; bash $basedir/create-hist-table.sh ; rm $qry1 $basedir/create-hist-table.sh $coresrefined
                 #
-                mysql --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO \`hist-temperature-$hostname\` SELECT *, RAND(), CURRENT_TIMESTAMP() FROM \`temperature-$hostname\`;"
+                mysql --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO \`hist-temperature-$hostname\` SELECT *, RAND(), CURRENT_TIMESTAMP() FROM \`temperature-$hostname\`;" 2>/dev/null
                 #mysql --user=$mysqluser --password=$mysqlpass -e "USE status; SELECT * FROM \`hist-temperature-$hostname\`;"
-
-
-
-
 
         fi
 fi
-
-if ! grep -q "temperature-$hostname" "dbfile.txt"; then
+if ! grep -q "temperature-$hostname" "/root/scripts/SECSUITE/inframon/temperaturefiles/dbfile.txt"; then
         #printf "${red} Table 'status.temperature-$hostname' Doesn't exist...${nc}\n"
         table="$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)temperature-$hostname$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)"
-        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> qry1.txt
-        echo '"' >> qry1.txt
-        echo "USE status;CREATE TABLE IF NOT EXISTS " >> qry1.txt
-        echo "$table" >> qry1.txt
-        echo " " >> qry1.txt
-        echo "(id int(11) NOT NULL, hostname varchar(255) DEFAULT NULL, " >> qry1.txt
-        sed -i 's/:       /\,      /g' coresrefined.csv
-        sed -i 's/Core /Core/g' coresrefined.csv
+        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> $qry1
+        echo '"' >> $qry1
+        echo "USE status;CREATE TABLE IF NOT EXISTS " >> $qry1
+        echo "$table" >> $qry1
+        echo " " >> $qry1
+        echo "(id int(11) NOT NULL, hostname varchar(255) DEFAULT NULL, " >> $qry1
+        sed -i 's/:       /\,      /g' $coresrefined
+        sed -i 's/Core /Core/g' $coresrefined
         echo ''
         #echo "Listing Cores..."
         #cat coresrefined.csv
-        sed -i 's/\,//g' coresrefined.csv
-        input="coresrefined.csv"
+        sed -i 's/\,//g' $coresrefined
+        input=$coresrefined
         while IFS= read -r line
         do
-          echo "$line" | awk '{print $1 " varchar(255) NOT NULL," }' >> qry1.txt
+          echo "$line" | awk '{print $1 " varchar(255) NOT NULL," }' >> $qry1
         done < "$input"
-        echo 'PRIMARY KEY (id));" 2>/dev/null'>> qry1.txt
+        echo 'PRIMARY KEY (id));" 2>/dev/null'>> $qry1
         echo ''
-        tr -d "\n" < qry1.txt > qry2.txt
-        echo "" >> qry2.txt
+        tr -d "\n" < $qry1 > $qry2
+        echo "" >> $qry2
         #cat qry2.txt
-        mv qry2.txt createtemptbl.sh
-        chmod 755 createtemptbl.sh ; bash createtemptbl.sh
+        mv $qry2 $basedir/createtemptbl.sh
+        chmod 755 $basedir/createtemptbl.sh ; bash $basedir/createtemptbl.sh
         # mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;DESCRIBE \`temperature-$hostname\`;" 2>/dev/null
-        rm qry1.txt createtemptbl.sh
+        rm $qry1 $basedir/createtemptbl.sh
         #
-        mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;DESCRIBE \`temperature-$hostname\`;" >> temphostname.txt 2>/dev/null
-        cat temphostname.txt | grep "Core" >> corefile.txt
-        cat corefile.txt | awk '{print $1}' >> corenumtbl.txt
-        wc -l corenumtbl.txt > corenums.txt
-        sed -i 's/corenumtbl.txt//g' corenums.txt
-        dbcores=$(cat corenums.txt)
-        rm temphostname.txt corefile.txt corenumtbl.txt corenums.txt corelines.txt
+        mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;DESCRIBE \`temperature-$hostname\`;" >> $basedir/temphostname.txt 2>/dev/null
+        cat $basedir/temphostname.txt | grep "Core" >> $basedir/corefile.txt
+        cat $basedir/corefile.txt | awk '{print $1}' >> $basedir/corenumtbl.txt
+        wc -l $basedir/corenumtbl.txt > $basedir/corenums.txt
+        sed -i 's/corenumtbl.txt//g' $basedir/corenums.txt
+        dbcores=$(cat $basedir/corenums.txt)
+        rm $basedir/temphostname.txt $basedir/corefile.txt $basedir/corenumtbl.txt $basedir/corenums.txt $basedir/corelines.txt $coresrefined
         #echo "Cores on Machine:"
         #echo $localcores
         #echo "Cores in temperature-$hostname"
         #echo $dbcores
 fi
-rm dbfile.txt
+rm $dbfile
 #
 if [ "$localcores" = "$dbcores" ]; then
         table="$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)temperature-$hostname$(cat /root/scripts/SECSUITE/inframon/temperaturefiles/resources/sc.txt)"
-        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> qry1.txt
-        echo '"' >> qry1.txt
-        echo "USE status;INSERT INTO " >> qry1.txt
-        echo "$table" >> qry1.txt
-        echo " " >> qry1.txt
-        echo 'VALUES (' >> qry1.txt
+        echo "mysql --user='$mysqluser' --password='$mysqlpass' -e " >> $qry1
+        echo '"' >> $qry1
+        echo "USE status;INSERT INTO " >> $qry1
+        echo "$table" >> $qry1
+        echo " " >> $qry1
+        echo 'VALUES (' >> $qry1
         #echo "Getting new ID for $hostname..."
         #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
-        mysql -h"$ipaddr" -D'status' --user="$mysqluser" --password="$mysqlpass" -e "SELECT ID FROM \`temperature-$hostname\`;" > dbidnums.txt 2>/dev/null
-        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        mysql -h"$ipaddr" -D'status' --user="$mysqluser" --password="$mysqlpass" -e "SELECT ID FROM \`temperature-$hostname\`;" > $dbidnums 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' $dbidnums)
         #Add one to make it acceptable
         ((i++))
         #printf "+ The new ID has been generated: ${green} $i ${nc}\n"
-        echo "'$i', '$hostname', " >> qry1.txt
-        tr -d "\n" < qry1.txt > qry2.txt
-        sed -i 's/:       /\,      /g' coresrefined.csv
-        sed -i 's/\,//g' coresrefined.csv
-        input="coresrefined.csv"
+        echo "'$i', '$hostname', " >> $qry1
+        tr -d "\n" < $qry1 > $qry2
+        sed -i 's/:       /\,      /g' $coresrefined
+        sed -i 's/\,//g' $coresrefined
+        input=$coresrefined
         while IFS= read -r line
         do
-          echo "$line" | awk '{print "'\''"$2"'\''" " ," }' >> qry2.txt
+          echo "$line" | awk '{print "'\''"$2"'\''" " ," }' >> $qry2
         done < "$input"
-        tr -d "\n" < qry2.txt >> qry3.txt
-        grep -Po '.*(?=,$)' qry3.txt >> qry4.txt
-        echo ');" 2>/dev/null' >> qry4.txt
-        echo "" >> qry4.txt
+        tr -d "\n" < $qry2 >> $qry3
+        grep -Po '.*(?=,$)' $qry3 >> $qry4
+        echo ');" 2>/dev/null' >> $qry4
+        echo "" >> $qry4
         echo ""
-        tr -d "\n" < qry4.txt >> qry5.txt
-        echo "" >> qry5.txt
-        mv qry5.txt insertintodb.sh
-        chmod 755 insertintodb.sh ; bash insertintodb.sh
-        rm qry1.txt qry2.txt qry3.txt qry4.txt insertintodb.sh coresrefined.csv dbidnums.txt
-        #mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;SELECT * FROM \`temperature-$hostname\`;"
+        tr -d "\n" < $qry4 >> $qry5
+        echo "" >> $qry5
+        mv $qry5 $basedir/insertintodb.sh
+        chmod 755 $basedir/insertintodb.sh ; bash $basedir/insertintodb.sh
+        rm $qry1 $qry2 $qry3 $qry4 $basedir/insertintodb.sh $basedir/coresrefined.csv $dbidnums
+        # mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status;SELECT * FROM \`temperature-$hostname\`;" 2>/dev/null
 fi
-
 exit
