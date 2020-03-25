@@ -66,6 +66,36 @@ rm dbfile.txt
 #****************************
 #START Database Configuration
 #****************************
+echo "Checking Database Configuration..."
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
+if grep -q "srv" "dbfile.txt"; then
+        printf "${green} Table 'status.srv' exists, continuing...${nc}\n"
+fi
+if ! grep -q "srv" "dbfile.txt"; then
+        printf "${red} Table 'status.srv' Doesn't exist, Installing...${nc}\n"
+        mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE srv (id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255) NOT NULL, lastping VARCHAR(255) NOT NULL, PRIMARY KEY (id));" 2>/dev/null
+    mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q "srv" "dbfile2.txt"; then
+	printf "${green}Table 'status.srv' has been created, continuing...${nc}\n"
+	fi
+fi
+rm dbfile.txt dbfile2.txt
+
+echo "Checking Historical Database Configuration..."
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
+if grep -q "hist_srv" "dbfile.txt"; then
+        printf "${green} Table 'status.hist_srv' exists, continuing...${nc}\n"
+fi
+if ! grep -q "hist_srv" "dbfile.txt"; then
+        printf "${red} Table 'status.hist_srv' Doesn't exist, Installing...${nc}\n"
+        mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE hist_srv (id INT NOT NULL, hostname VARCHAR(255) NOT NULL, lastping VARCHAR(255) NOT NULL, importtime VARCHAR(255) NOT NULL, random VARCHAR(255) NOT NULL, PRIMARY KEY (random));" 2>/dev/null
+    mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q "hist_srv" "dbfile2.txt"; then
+	printf "${green}Table 'status.hist_srv' has been created, continuing...${nc}\n"
+	fi
+fi
+rm dbfile.txt dbfile2.txt
+
 echo "Configuring Database for new entry..."
 #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
 mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM srv;" > dbidnums.txt 2>/dev/null
@@ -153,7 +183,6 @@ sshfilename=$(echo "file$filenumssh='/root/scripts/SECSUITE/inframon/tempfiles/f
 #Add rows in DB for first 2 devices:
 mysql --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO srv (id, hostname, lastping) VALUES ('1','$hostname Web Server','Awaiting Configuration');" 2>/dev/null
 mysql --user=$mysqluser --password=$mysqlpass -e "USE status; INSERT INTO srv (id, hostname, lastping) VALUES ('2','$hostname SSH Server','Awaiting Configuration');" 2>/dev/null
-
 #**************************
 #START Script Creation
 #**************************
@@ -174,7 +203,6 @@ echo "file02='/root/scripts/SECSUITE/inframon/tempfiles/02.csv'" >> $buildfile
 echo "#" >> $buildfile
 echo "# << BEGIN HOSTS >>" >> $buildfile
 echo "#" >> $buildfile
-
 #**************************
 #START Host Web Server
 #**************************
@@ -220,7 +248,6 @@ sed -i 's/SUCCESS= $ ?/SUCCESS=$?/g' $buildfile
 sed -i 's/$ file01/$file01/g' $buildfile
 sed -i 's/$ hostdev/$hostdev/g' $buildfile
 sed -i 's/$ lastping01/$lastping01/g' $buildfile
-
 #**************************
 #START Host SSH Server
 #**************************
@@ -280,6 +307,9 @@ echo ''
 echo "Your network monitor script for $hostname: "
 FILE=/root/scripts/SECSUITE/inframon/latency-files/$hostname-latency-monitor.sh
 if test -f "$FILE"; then
-    printf "+ ${green} $FILE ${nc} has been created successfully.\n"
+    printf "+ ${green} $FILE ${nc} has been created successfully. Executing...\n"
+    bash /root/scripts/SECSUITE/inframon/latency-files/$hostname-latency-monitor.sh
+    mysql --user="$mysqluser" --password="$mysqlpass" -e "use status; select * from srv;" 2>/dev/null
+    mysql --user="$mysqluser" --password="$mysqlpass" -e "use status; select * from hist_srv;" 2>/dev/null
 fi
 exit
