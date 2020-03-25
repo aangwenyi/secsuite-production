@@ -31,6 +31,7 @@ printf "${green}       CPU-LOAD-AVERAGE-INSTALLER${nc}\n"
 echo ''
 echo "Welcome to the SECSUITE CPU Load Avg Installer"
 echo ''
+
 echo "Checking for previous installs..."
 inframon2="/root/scripts/SECSUITE/inframon/cpufiles/"
 if [ -d "$inframon2" ]; then
@@ -118,4 +119,5 @@ fi
         sed -i 's/$ hostname/$hostname/g' $cpumonitor
         sed -i 's/$ hostname.csv/$hostname.csv/g' $cpumonitor
         sed -i 's/$ hostnamefile/$hostnamefile/g' $cpumonitor
+bash /root/scripts/SECSUITE/inframon/cpu-load-new-node-installer-local.sh
 exit
