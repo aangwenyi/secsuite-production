@@ -74,7 +74,7 @@ echo "fi" >> $constructfile
 echo '        #printf "+  Status file created: ${lightgreen}OK${nc}\n\n"' >> $constructfile
 echo "#" >> $constructfile
 #
-echo "Checking database for entries..."
+echo "Checking Database Configuration..."
 mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
 if grep -q apachestatus "dbfile.txt"; then
         printf "${green} Table 'status.apachestatus' exists, continuing...${nc}\n"
@@ -85,13 +85,49 @@ if grep -q apachestatus "dbfile.txt"; then
         #Add one to make it acceptable
         ((i++))
         printf "+ The new ID has been generated: ${green} $i ${nc}\n"
+	rm dbidnums.txt
 fi
 if ! grep -q apachestatus "dbfile.txt"; then
         printf "${red} Table 'status.apachestatus' Doesn't exist, Installing...${nc}\n"
         mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE apachestatus (id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255) NOT NULL, apachestatus VARCHAR(255) NOT NULL, PRIMARY KEY (id));" 2>/dev/null
+    mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q apachestatus "dbfile2.txt"; then
+	printf "${green}Table 'status.apachestatus' has been created, continuing...${nc}\n"
+        echo "Getting new ID for $hostname..."
+        #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
+        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM apachestatus;" > dbidnums.txt 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        #Add one to make it acceptable
+        ((i++))
+        printf "+ The new ID has been generated: ${green} $i ${nc}\n"
+        rm dbidnums.txt
+	fi
 fi
-rm dbfile.txt dbidnums.txt
+rm dbfile.txt dbfile2.txt
+echo "Checking Historical Database Configuration..."
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
+if grep -q "hist_apachestatus" "dbfile.txt"; then
+	printf "${green} Table 'status.hist_apachestatus' exists, continuing...${nc}\n"
+        echo "Getting new ID for $hostname..."
+        #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
+        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM hist_apachestatus;" > dbidnums.txt 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        #Add one to make it acceptable
+        ((i++))
+        printf "+ The new ID has been generated: ${green} $i ${nc}\n"
+        rm dbidnums.txt
+fi
+if ! grep -q "hist_apachestatus" "dbfile.txt"; then
+        printf "${red} Table 'status.hist_apachestatus' Doesn't exist, Installing...${nc}\n"
+	mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE hist_apachestatus (id INT NOT NULL, hostname VARCHAR(255) NOT NULL, apachestatus VARCHAR(255) NOT NULL, timestamp VARCHAR(255) NOT NULL, PRIMARY KEY (timestamp));" 2>/dev/null
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q "hist_apachestatus" "dbfile2.txt"; then
+        printf "${green}Table 'status.hist_apachestatus' has been created, continuing...${nc}\n"
+	fi
+fi
+rm dbfile.txt dbfile2.txt
 #
+echo "Building script..."
 echo 'if grep -q "active (running)" "$ statusfile"; then' >> $constructfile
 echo 'cat $ statusfile | grep -E "Active" > $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
@@ -129,4 +165,9 @@ sed -i 's/$ statusfile/$statusfile/g' $constructfile
 sed -i 's/$ statusfile2/$statusfile2/g' $constructfile
 sed -i 's/$ statusfile1/$statusfile1/g' $constructfile
 sed -i 's/$ statusfilemon1/$statusfilemon1/g' $constructfile
+if grep -q "$hostname" "$constructfile"; then
+	echo "Script has been created successfully. Executing..."
+fi
+bash $constructfile
+mysql --user=$mysqluser --password=$mysqlpass -e "use status;select * from apachestatus;" 2>/dev/null
 exit
