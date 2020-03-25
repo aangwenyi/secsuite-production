@@ -27,9 +27,8 @@ OPTIONS=(1 "Configure Apache Monitor"
          2 "Configure CPU Load Monitor"
          3 "Configure New Node CPU Monitor"
          4 "Configure Network Latency Monitor"
-         5 "Configure CPU Temperature Monitor"
-         6 "Configure Dashboard (BETA)"
-         7 "Configure New Remote Node")
+         5 "Configure Dashboard (BETA)"
+         6 "Configure New Remote Node")
 
 CHOICE=$(dialog --clear \
                 --backtitle "$BACKTITLE" \
@@ -55,7 +54,7 @@ case $CHOICE in
 
         2)
 
-        bash /root/scripts/SECSUITE/inframon/cpu-load-average-monitor-installer.sh
+        bash /root/scripts/SECSUITE/inframon/cpu-load-average-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
         echo #
@@ -67,7 +66,7 @@ case $CHOICE in
 
         3)
 
-        bash /root/scripts/SECSUITE/inframon/cpu-load-new-node-installer.sh
+        bash /root/scripts/SECSUITE/inframon/cpu-load-new-node-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
         echo #
@@ -91,18 +90,6 @@ case $CHOICE in
 
         5)
 
-        bash /root/scripts/SECSUITE/inframon/temperature-monitor-install.sh
-
-        read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
-        if [[ $REPLY =~ ^[Yy]$ ]]
-        then
-        bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
-        fi
-        ;;
-
-        6)
-
         echo "This feature is currently in development."
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
@@ -113,7 +100,7 @@ case $CHOICE in
         fi
         ;;
 
-        7)
+        6)
 
         while true; do
             read -p "Do you wish to store the monitoring data locally on this server (Y) or on the node itself (N)? (Y/n): " yn
