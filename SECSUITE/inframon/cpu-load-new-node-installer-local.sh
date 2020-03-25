@@ -38,6 +38,35 @@ while true; do
     esac
 done
 echo ''
+echo "Checking Database Configuration..."
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
+if grep -q cpu "dbfile.txt"; then
+        printf "${green} Table 'status.cpu' exists, continuing...${nc}\n"
+fi
+if ! grep -q cpu "dbfile.txt"; then
+        printf "${red} Table 'status.cpu' Doesn't exist, Installing...${nc}\n"
+        mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE IF NOT EXISTS cpu ( id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255), loadonemin VARCHAR(10), loadtenmin VARCHAR(10), loadfifmin VARCHAR(10), x VARCHAR(10), y VARCHAR(10), PRIMARY KEY (id));" 2>/dev/null
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q cpu "dbfile2.txt"; then
+	printf "${green} Table 'status.cpu' has been created, continuing..."
+	fi
+fi
+rm dbfile.txt dbfile2.txt
+
+echo "Checking Historical Database Configuration..."
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
+if grep -q "hist_cpu" "dbfile.txt"; then
+        printf "${green} Table 'status.hist_cpu' exists, continuing...${nc}\n"
+fi
+if ! grep -q "hist_cpu" "dbfile.txt"; then
+        printf "${red} Table 'status.hist_cpu' Doesn't exist, Installing...${nc}\n"
+        mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE IF NOT EXISTS hist_cpu ( id INT NOT NULL, hostname VARCHAR(255), loadonemin VARCHAR(10), loadtenmin VARCHAR(10), loadfifmin VARCHAR(10), x VARCHAR(10), y VARCHAR(10), timestamp VARCHAR(255) NOT NULL, PRIMARY KEY (timestamp));" 2>/dev/null
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
+	if grep -q "hist_cpu" "dbfile2.txt"; then
+	printf "${green} Table 'status.hist_cpu' has been created, continuing...${nc}\n"
+	fi
+fi
+rm dbfile.txt dbfile2.txt
 #Get Current Amount of Configured Assets
 mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM cpu;" > dbidnums.txt 2>/dev/null
 i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
@@ -62,16 +91,6 @@ else
   printf "+ ${red} ${inframon2} ${nc} Not Found. Creating new workspace...\n"
   mkdir /root/scripts/SECSUITE/inframon/cpufiles/
 fi
-echo "Checking if Database & Table exists..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
-if grep -q cpu "dbfile.txt"; then
-        printf "${green} Table 'status.cpu' exists, continuing...${nc}\n"
-fi
-if ! grep -q cpu "dbfile.txt"; then
-        printf "${red} Table 'status.cpu' Doesn't exist, Installing...${nc}\n"
-        mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE IF NOT EXISTS cpu ( id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255), loadonemin VARCHAR(10), loadtenmin VARCHAR(10), loadfifmin VARCHAR(10), x VARCHAR(10), y VARCHAR(10), PRIMARY KEY (id));" 2>/dev/null
-fi
-rm dbfile.txt
 echo ''
 read -p "Please enter the HOSTNAME of the asset you wish to add: " hostname
 #
@@ -104,14 +123,6 @@ echo 'cat /proc/loadavg >> $ workfile'>> $constructfile
 echo "sed -i 's/ /,/g' $ workfile " >> $constructfile
 echo "tr -d '\n' < $ workfile > $ importfile" >> $constructfile
 echo "echo ' ' >> $ importfile" >> $constructfile
- while true; do
-    read -p "Would you like to use this machine as a Processing Server (Default) (Y) or send to a remote site (N)? (y/n): " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) read -p "Please enter the SSH Username of your Processing Server: " procuser ; read -p "Please enter the IP address of your Processing Server: " procsrv ; echo "rsync -avzh /var/lib/mysql-files/importfile.csv $procuser@$procsrv:/root/scripts/SECSUITE/inframon/cpufiles/$hostname/" >> $constructfile ;exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
- done
 chmod 755 /root/scripts/SECSUITE/inframon/cpufiles/$hostname/load-avg-monitor-$hostname.sh
 chmod 755 /root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh
 echo "bash /root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh" >> $constructfile
@@ -124,4 +135,6 @@ sed -i 's/$ importfile/$importfile/g' $constructfile
 sed -i 's/$ workfile/$workfile/g' $constructfile
 printf "+ Your monitor script is available at: ${green} $constructfile ${nc}\n"
 echo ''
+bash $constructfile
+mysql --user=$mysqluser --password=$mysqlpass -e "use status;select * from cpu;" 2>/dev/null
 exit
