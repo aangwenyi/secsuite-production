@@ -4,6 +4,8 @@ red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
 #
+monscript="/root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh"
+#
 #Begin
 #
 printf "${green} ____  _____ ____ ____  _   _ ___ _____ _____${nc}\n"
@@ -33,12 +35,12 @@ done
 #
 #Begin Construction
 #
-sed -i "s/mysqluser='user'/mysqluser='$mysqluser'/g" /root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh
-sed -i "s/mysqlpass='pass'/mysqlpass='$mysqlpass'/g" /root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh
-sed -i "s/hostname='host'/hostname='$hostname'/g" /root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh
+sed -i "s/mysqluser='user'/mysqluser='$mysqluser'/g" $monscript
+sed -i "s/mysqlpass='pass'/mysqlpass='$mysqlpass'/g" $monscript
+sed -i "s/hostname='host'/hostname='$hostname'/g" $monscript
 echo "Setup Complete. Executing..."
-bash /root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh
-bash /root/scripts/SECSUITE/inframon/temperaturefiles/temperature-monitor-local.sh
+bash $monscript
+bash $monscript
 mysql --user="$mysqluser" --password="$mysqlpass" -e "use status;select * from \`temperature-$hostname\`;" 2>/dev/null
 mysql --user="$mysqluser" --password="$mysqlpass" -e "use status;select * from \`hist-temperature-$hostname\`;" 2>/dev/null
 exit
