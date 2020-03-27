@@ -10,10 +10,22 @@
 #
 #Global Variables
 #
+#
+#MySQL Creds
+mysqluser="user"
+mysqlpass="pass"
+#
 #ASCII Colours
 red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
+#
+basedir="/root/scripts/SECSUITE/inframon"
+dbf="$basedir/dbfile.txt"
+dbf1="$basedir/dbfile1.txt"
+dbid="$basedir/dbidnums.txt"
+lid="$basedir/lastid.txt"
+sclid="$basedir/sclastid.txt"
 #
 #Begin
 #
@@ -39,42 +51,43 @@ while true; do
 done
 echo ''
 echo "Checking Database Configuration..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
-if grep -q cpu "dbfile.txt"; then
-        printf "${green} Table 'status.cpu' exists, continuing...${nc}\n"
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf 2>/dev/null
+if grep -q "cpu" "$dbf"; then
+        printf "${green}Table 'status.cpu' exists, continuing...${nc}\n"
 fi
-if ! grep -q cpu "dbfile.txt"; then
-        printf "${red} Table 'status.cpu' Doesn't exist, Installing...${nc}\n"
+if ! grep -q "cpu" "$dbf"; then
+        printf "${red}Table 'status.cpu' Doesn't exist, Installing...${nc}\n"
         mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE IF NOT EXISTS cpu ( id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255), loadonemin VARCHAR(10), loadtenmin VARCHAR(10), loadfifmin VARCHAR(10), x VARCHAR(10), y VARCHAR(10), PRIMARY KEY (id));" 2>/dev/null
-	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
-	if grep -q cpu "dbfile2.txt"; then
-	printf "${green} Table 'status.cpu' has been created, continuing..."
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf1 2>/dev/null
+	if grep -q "cpu" "$dbf1"; then
+	printf "${green}Table 'status.cpu' has been created, continuing..."
 	fi
 fi
-rm dbfile.txt dbfile2.txt
+rm $dbf $dbf1
 
 echo "Checking Historical Database Configuration..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
-if grep -q "hist_cpu" "dbfile.txt"; then
-        printf "${green} Table 'status.hist_cpu' exists, continuing...${nc}\n"
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf 2>/dev/null
+if grep -q "hist_cpu" "$dbf"; then
+        printf "${green}Table 'status.hist_cpu' exists, continuing...${nc}\n"
 fi
-if ! grep -q "hist_cpu" "dbfile.txt"; then
-        printf "${red} Table 'status.hist_cpu' Doesn't exist, Installing...${nc}\n"
+if ! grep -q "hist_cpu" "$dbf"; then
+        printf "${red}Table 'status.hist_cpu' Doesn't exist, Installing...${nc}\n"
         mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE IF NOT EXISTS hist_cpu ( id INT NOT NULL, hostname VARCHAR(255), loadonemin VARCHAR(10), loadtenmin VARCHAR(10), loadfifmin VARCHAR(10), x VARCHAR(10), y VARCHAR(10), timestamp VARCHAR(255) NOT NULL, PRIMARY KEY (timestamp));" 2>/dev/null
-	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
-	if grep -q "hist_cpu" "dbfile2.txt"; then
-	printf "${green} Table 'status.hist_cpu' has been created, continuing...${nc}\n"
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf1 2>/dev/null
+	if grep -q "hist_cpu" "$dbf1"; then
+	printf "${green}Table 'status.hist_cpu' has been created, continuing...${nc}\n"
 	fi
 fi
-rm dbfile.txt dbfile2.txt
+rm $dbf $dbf1
+#
 #Get Current Amount of Configured Assets
-mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM cpu;" > dbidnums.txt 2>/dev/null
-i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM cpu;" > $dbid 2>/dev/null
+i=$(awk '/./{line=$0} END{print line}' $dbid)
 #Get All ID Numbers (smallest first, largest last)
-cat dbidnums.txt | grep -oP '^[^0-9]*\K[0-9]+' > lastid.txt
+cat $dbid | grep -oP '^[^0-9]*\K[0-9]+' > $lid
 #Select last line of file
-cat lastid.txt | awk '/./{line=$0} END{print line}' > sclastid.txt
-i=$(awk '/./{line=$0} END{print line}' sclastid.txt)
+cat $lid | awk '/./{line=$0} END{print line}' > $sclid
+i=$(awk '/./{line=$0} END{print line}' $sclid)
 #Le Maths
 one="1"
 number=$(echo $[$i - $one])
@@ -82,26 +95,26 @@ number=$(echo $[$i - $one])
 ((number++))
 printf "+ ${green} You currently have $number hosts configured${nc}\n"
 #Remove source
-rm lastid.txt sclastid.txt dbidnums.txt
+rm $dbid $lid $sclid
 echo "Checking for previous installs..."
-inframon2="/root/scripts/SECSUITE/inframon/cpufiles/"
+inframon2="$basedir/cpufiles/"
 if [ -d "$inframon2" ]; then
-  printf "${green} ${inframon2} ${nc} Exists, continuing...\n"
+  printf "${green}${inframon2} ${nc} Exists, continuing...\n"
 else
-  printf "+ ${red} ${inframon2} ${nc} Not Found. Creating new workspace...\n"
-  mkdir /root/scripts/SECSUITE/inframon/cpufiles/
+  printf "+ ${red}${inframon2} ${nc} Not Found. Creating new workspace...\n"
+  mkdir $basedir/cpufiles/
 fi
 echo ''
 read -p "Please enter the HOSTNAME of the asset you wish to add: " hostname
 #
 #Begin Constructing Package;
 #
-constructfile="/root/scripts/SECSUITE/inframon/cpufiles/$hostname/load-avg-monitor-$hostname.sh"
+constructfile="$basedir/cpufiles/$hostname/load-avg-monitor-$hostname.sh"
 echo "#!/bin/bash" >> $constructfile
 echo "#Variables" >> $constructfile
 echo "mysqlusername='$mysqluser'" >> $constructfile
 echo "mysqlpassword='$mysqlpass'" >> $constructfile
-echo "workfile='/root/scripts/SECSUITE/inframon/cpufiles/$hostname/workfile.csv'" >> $constructfile
+echo "workfile='$basedir/cpufiles/$hostname/workfile.csv'" >> $constructfile
 echo "hostname=$hostname" >> $constructfile
 echo "importfile='/var/lib/mysql-files/importfile.csv'" >> $constructfile
 echo "#" >> $constructfile
@@ -123,9 +136,9 @@ echo 'cat /proc/loadavg >> $ workfile'>> $constructfile
 echo "sed -i 's/ /,/g' $ workfile " >> $constructfile
 echo "tr -d '\n' < $ workfile > $ importfile" >> $constructfile
 echo "echo ' ' >> $ importfile" >> $constructfile
-chmod 755 /root/scripts/SECSUITE/inframon/cpufiles/$hostname/load-avg-monitor-$hostname.sh
-chmod 755 /root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh
-echo "bash /root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh" >> $constructfile
+chmod 755 $basedir/cpufiles/$hostname/load-avg-monitor-$hostname.sh
+chmod 755 $basedir/cpufiles/$hostname/cpu-load-monitor.sh
+echo "bash $basedir/cpufiles/$hostname/cpu-load-monitor.sh" >> $constructfile
 echo "exit" >> $constructfile
 sed -i 's/$ i/$i/g' $constructfile
 sed -i 's/$ 0/$0/g' $constructfile
