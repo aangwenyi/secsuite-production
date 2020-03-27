@@ -7,14 +7,6 @@
 ## Created & Maintained by Daniel Ward
 The purpose of SECSUITE is to allow easy workflows & automated threat management to UNIX Systems Administrators.
 
-### Within SECSUITE Free Tier:
-#### Ubuntu hosts only
-
-#### SECSUITE Inframon Basic:
-- Apache Web Server Monitor
-- Network Latency Monitor
-- Users Monitor
-
 #### Ubuntu & Debian hosts
 
 #### SECSUITE Inframon Advanced:
@@ -59,6 +51,11 @@ To install Inframon, execute "SECSUITE/inframon/complete-local-setup.sh"; You wi
 <p align="center">
 <img src="http://securitechsystems.ca/img/auto-discovery-network-install.png" title="Installation Diagram (Multi-Host)">
 </p>  
+
+#### Webinspector  
+- A lightweight Apache Log Monitoring system, with backups inserted into MySQL for further analysis.  
+
+
 
 - Installation Scripts to aid the installation & configuration of local & remote hosts for all programs.
 
