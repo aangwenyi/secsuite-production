@@ -10,7 +10,7 @@
 #
 #Global Variables
 #
-#MySQL Creds (optional)
+#MySQL Creds
 mysqluser="user"
 mysqlpass="pass"
 #
@@ -18,6 +18,10 @@ mysqlpass="pass"
 red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
+#
+basedir="/root/scripts/SECSUITE/inframon"
+qry1="$basedir/qry1.txt"
+qry2="$basedir/qry2.txt"
 #
 #Begin
 #
@@ -33,12 +37,12 @@ echo "Welcome to the SECSUITE CPU Load Avg Installer"
 echo ''
 
 echo "Checking for previous installs..."
-inframon2="/root/scripts/SECSUITE/inframon/cpufiles/"
+inframon2="$basedir/cpufiles/"
 if [ -d "$inframon2" ]; then
-  printf "${green} ${inframon2} ${nc} Exists, continuing...\n"
+  printf "${green}${inframon2} ${nc} Exists, continuing...\n"
 else
-  printf "+ ${red} ${inframon2} ${nc} Not Found. Creating new workspace...\n"
-  mkdir /root/scripts/SECSUITE/inframon/cpufiles/
+  printf "+ ${red}${inframon2} ${nc} Not Found. Creating new workspace...\n"
+  mkdir $basedir/cpufiles/
 fi
 echo ''
 while true; do
@@ -56,16 +60,16 @@ echo ''
 read -p "Please enter the HOSTNAME of the asset you wish to add: " hostname
 echo ''
 echo "Checking for active host installs..."
-FILE="/root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh"
+FILE="$basedir/cpufiles/$hostname/cpu-load-monitor.sh"
                 if [ -f "$FILE" ]; then
-                    printf "+ ${red} $hostname ${nc} Already Exists. Exiting.\n" ; exit
+                    printf "+ ${red}$hostname ${nc} Already Exists. Exiting.\n" ; exit
                 else
-                    printf "+ ${green} $hostname ${nc} Not existing, it will be created...\n"
+                    printf "+ ${green}$hostname ${nc} Not existing, it will be created...\n"
                         echo "Do you wish to name this host $hostname? (y/n): "
                         select yn in "Yes" "No"; do
                             case $yn in
-                                Yes ) mkdir /root/scripts/SECSUITE/inframon/cpufiles/$hostname ; break;;
-                                No ) read -p "Please enter the identifying NAME of the asset you wish to add: " hostname;break;;
+                                Yes ) mkdir $basedir/cpufiles/$hostname ; break;;
+                                No ) read -p "Please enter the identifying NAME of the asset you wish to add: " hostname ; break;;
                             esac
                 done
                 fi
@@ -73,12 +77,12 @@ echo ''
 #
 #Begin Constructing Package;
 #
-cpumonitor="/root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh"
-FILE="/root/scripts/SECSUITE/inframon/cpufiles/$hostname/cpu-load-monitor.sh"
+cpumonitor="$basedir/cpufiles/$hostname/cpu-load-monitor.sh"
+FILE="$basedir/cpufiles/$hostname/cpu-load-monitor.sh"
 if [ -f "$FILE" ]; then
-    printf "+ ${red} $hostname ${nc} Already Exists. Exiting. \n" ; exit
+    printf "+ ${red}$hostname ${nc} Already Exists. Exiting. \n" ; exit
 else
-    printf "+ ${green} $hostname ${nc} will be created...\n"
+    printf "+ ${green}$hostname ${nc} will be created...\n"
     touch $cpumonitor
         echo "#!/bin/bash" >> $cpumonitor
         echo "#" >> $cpumonitor
@@ -88,25 +92,25 @@ else
         echo "mysqluser='$manmysqluser'" >> $cpumonitor
         echo "mysqlpass='$manmysqlpass'" >> $cpumonitor
         echo "#" >> $cpumonitor
-        echo "hostnamefile='/root/scripts/SECSUITE/inframon/cpufiles/$hostname/workfile.csv'" >> $cpumonitor
+        echo "hostnamefile='$basedir/cpufiles/$hostname/workfile.csv'" >> $cpumonitor
         echo "hostname=$hostname" >> $cpumonitor
         echo "importfile='/var/lib/mysql-files/cpuimport.csv'" >> $cpumonitor
         echo "tr -d '\n' < $ hostnamefile > $ importfile" >> $cpumonitor
         echo "echo ' ' >> $ importfile" >> $cpumonitor
-        echo "mysql --user=$ mysqluser --password=$ mysqlpass -e " >> qry1.txt
-        echo '"USE status; truncate table cpu;" 2>/dev/null ' >> qry1.txt
-        tr -d '\n' < qry1.txt > qry2.txt
-        cat qry2.txt >> $cpumonitor
-        rm qry1.txt qry2.txt
+        echo "mysql --user=$ mysqluser --password=$ mysqlpass -e " >> $qry1
+        echo '"USE status; truncate table cpu;" 2>/dev/null ' >> $qry1
+        tr -d '\n' < $qry1 > $qry2
+        cat $qry2 >> $cpumonitor
+        rm $qry1 $qry2
         echo "" >> $cpumonitor
-        echo "mysql --user=$ mysqluser --password=$ mysqlpass -e " >> qry1.txt
-        echo '"' >> qry1.txt
-        echo "USE status;LOAD DATA INFILE '/var/lib/mysql-files/cpuimport.csv' INTO TABLE cpu FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> qry1.txt
-        echo '"' >> qry1.txt
-        echo " 2>/dev/null" >> qry1.txt
-        tr -d '\n' < qry1.txt > qry2.txt
-        cat qry2.txt >> $cpumonitor
-        rm qry1.txt qry2.txt
+        echo "mysql --user=$ mysqluser --password=$ mysqlpass -e " >> $qry1
+        echo '"' >> $qry1
+        echo "USE status;LOAD DATA INFILE '/var/lib/mysql-files/cpuimport.csv' INTO TABLE cpu FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> $qry1
+        echo '"' >> $qry1
+        echo " 2>/dev/null" >> $qry1
+        tr -d '\n' < $qry1 > $qry2
+        cat $qry2 >> $cpumonitor
+        rm $qry1 $qry2
         echo "" >> $cpumonitor
         echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;INSERT INTO hist_cpu SELECT *, CURRENT_TIMESTAMP() FROM cpu;" 2>/dev/null' >> $cpumonitor
         echo "rm $ hostnamefile $ importfile" >> $cpumonitor
@@ -119,5 +123,5 @@ fi
         sed -i 's/$ hostname/$hostname/g' $cpumonitor
         sed -i 's/$ hostname.csv/$hostname.csv/g' $cpumonitor
         sed -i 's/$ hostnamefile/$hostnamefile/g' $cpumonitor
-bash /root/scripts/SECSUITE/inframon/cpu-load-new-node-installer-local.sh
+bash $basedir/cpu-load-new-node-installer-local.sh
 exit
