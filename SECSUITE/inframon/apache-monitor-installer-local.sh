@@ -19,6 +19,12 @@ red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
 #
+dbf="/root/scripts/SECSUITE/inframon/dbfile.txt"
+dbf1="/root/scripts/SECSUITE/inframon/dbfile1.txt"
+dbid="/root/scripts/SECSUITE/inframon/dbidnums.txt"
+qry1="/root/scripts/SECSUITE/inframon/qry1.txt"
+qry2="/root/scripts/SECSUITE/inframon/qry2.txt"
+#
 #Begin
 #
 printf "${green} ____  _____ ____ ____  _   _ ___ _____ _____${nc}\n"
@@ -75,57 +81,58 @@ echo '        #printf "+  Status file created: ${lightgreen}OK${nc}\n\n"' >> $co
 echo "#" >> $constructfile
 #
 echo "Checking Database Configuration..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
-if grep -q apachestatus "dbfile.txt"; then
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf 2>/dev/null
+if grep -q "apachestatus" "$dbf"; then
         printf "${green} Table 'status.apachestatus' exists, continuing...${nc}\n"
         echo "Getting new ID for $hostname..."
         #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
-        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM apachestatus;" > dbidnums.txt 2>/dev/null
-        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM apachestatus;" > $dbid 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' $dbid)
         #Add one to make it acceptable
         ((i++))
         printf "+ The new ID has been generated: ${green} $i ${nc}\n"
-	rm dbidnums.txt
+	rm $dbid
 fi
-if ! grep -q apachestatus "dbfile.txt"; then
+if ! grep -q "apachestatus" "$dbf"; then
         printf "${red} Table 'status.apachestatus' Doesn't exist, Installing...${nc}\n"
         mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE apachestatus (id INT AUTO_INCREMENT NOT NULL, hostname VARCHAR(255) NOT NULL, apachestatus VARCHAR(255) NOT NULL, PRIMARY KEY (id));" 2>/dev/null
-    mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
-	if grep -q apachestatus "dbfile2.txt"; then
+	#
+        mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf1 2>/dev/null
+	if grep -q "apachestatus" "$dbf1"; then
 	printf "${green}Table 'status.apachestatus' has been created, continuing...${nc}\n"
         echo "Getting new ID for $hostname..."
         #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
-        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM apachestatus;" > dbidnums.txt 2>/dev/null
-        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM apachestatus;" > $dbid 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' $dbid)
         #Add one to make it acceptable
         ((i++))
         printf "+ The new ID has been generated: ${green} $i ${nc}\n"
-        rm dbidnums.txt
+        rm $dbid
 	fi
 fi
-rm dbfile.txt dbfile2.txt
+rm $dbf $dbf1
 echo "Checking Historical Database Configuration..."
-mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile.txt 2>/dev/null
-if grep -q "hist_apachestatus" "dbfile.txt"; then
+mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf 2>/dev/null
+if grep -q "hist_apachestatus" "$dbf"; then
 	printf "${green} Table 'status.hist_apachestatus' exists, continuing...${nc}\n"
         echo "Getting new ID for $hostname..."
         #Get the ID numbers from the current database, add one, and use that as the ID for the new one.
-        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM hist_apachestatus;" > dbidnums.txt 2>/dev/null
-        i=$(awk '/./{line=$0} END{print line}' dbidnums.txt)
+        mysql --user=$mysqluser --password=$mysqlpass -e "use status;SELECT ID FROM hist_apachestatus;" > $dbid 2>/dev/null
+        i=$(awk '/./{line=$0} END{print line}' $dbid)
         #Add one to make it acceptable
         ((i++))
         printf "+ The new ID has been generated: ${green} $i ${nc}\n"
-        rm dbidnums.txt
+        rm $dbid
 fi
-if ! grep -q "hist_apachestatus" "dbfile.txt"; then
+if ! grep -q "hist_apachestatus" "$dbf"; then
         printf "${red} Table 'status.hist_apachestatus' Doesn't exist, Installing...${nc}\n"
 	mysql --user=$mysqluser --password=$mysqlpass -e "USE status;CREATE TABLE hist_apachestatus (id INT NOT NULL, hostname VARCHAR(255) NOT NULL, apachestatus VARCHAR(255) NOT NULL, timestamp VARCHAR(255) NOT NULL, PRIMARY KEY (timestamp));" 2>/dev/null
-	mysqlshow --user=$mysqluser --password=$mysqlpass status >> dbfile2.txt 2>/dev/null
-	if grep -q "hist_apachestatus" "dbfile2.txt"; then
+	mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf1 2>/dev/null
+	if grep -q "hist_apachestatus" "$dbf1"; then
         printf "${green}Table 'status.hist_apachestatus' has been created, continuing...${nc}\n"
 	fi
 fi
-rm dbfile.txt dbfile2.txt
+rm $dbf $dbf1
 #
 echo "Building script..."
 echo 'if grep -q "active (running)" "$ statusfile"; then' >> $constructfile
@@ -133,12 +140,12 @@ echo 'cat $ statusfile | grep -E "Active" > $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
 echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
-echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> qry1.txt
-echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> qry1.txt
-echo '" 2>/dev/null' >> qry1.txt
-tr -d '\n' < qry1.txt > qry2.txt
-cat qry2.txt >> $constructfile
-rm qry1.txt qry2.txt
+echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> $qry1
+echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> $qry1
+echo '" 2>/dev/null' >> $qry1
+tr -d '\n' < $qry1 > $qry2
+cat $qry2 >> $constructfile
+rm $qry1 $qry2
 echo "" >> $constructfile
 echo 'fi' >> $constructfile
 #
@@ -147,12 +154,12 @@ echo 'echo "Apache Server is Offline!" >> $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
 echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
-echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> qry1.txt
-echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> qry1.txt
-echo '" 2>/dev/null' >> qry1.txt
-tr -d '\n' < qry1.txt > qry2.txt
-cat qry2.txt >> $constructfile
-rm qry1.txt qry2.txt
+echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> $qry1
+echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> $qry1
+echo '" 2>/dev/null' >> $qry1
+tr -d '\n' < $qry1 > $qry2
+cat $qry2 >> $constructfile
+rm $qry1 $qry2
 echo "" >> $constructfile
 echo 'fi' >> $constructfile
 #
