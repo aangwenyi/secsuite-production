@@ -19,11 +19,12 @@ red='\033[0;31m'
 green='\033[0;32m'
 nc='\033[0m'
 #
-dbf="/root/scripts/SECSUITE/inframon/dbfile.txt"
-dbf1="/root/scripts/SECSUITE/inframon/dbfile1.txt"
-dbid="/root/scripts/SECSUITE/inframon/dbidnums.txt"
-qry1="/root/scripts/SECSUITE/inframon/qry1.txt"
-qry2="/root/scripts/SECSUITE/inframon/qry2.txt"
+basedir="/root/scripts/SECSUITE/inframon"
+dbf="$basedir/dbfile.txt"
+dbf1="$basedir/dbfile1.txt"
+dbid="$basedir/dbidnums.txt"
+qry1="$basedir/qry1.txt"
+qry2="$basedir/qry2.txt"
 #
 #Begin
 #
