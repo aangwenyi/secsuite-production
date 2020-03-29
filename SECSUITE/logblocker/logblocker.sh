@@ -2,12 +2,13 @@
 # Load Variables;
 # Files
 logsrc='/var/log/auth.log'
-procfile='/root/scripts/SECSUITE/logblocker/temp/procfile.txt'
-procfile1='/root/scripts/SECSUITE/logblocker/temp/procfile1.txt'
-procfile2='/root/scripts/SECSUITE/logblocker/temp/procfile2.txt'
-procfile3='/root/scripts/SECSUITE/logblocker/temp/procfile3.txt'
-procfile4='/root/scripts/SECSUITE/logblocker/temp/procfile4.txt'
-procfile5='/root/scripts/SECSUITE/logblocker/temp/procfile5.txt'
+tempdir="/root/scripts/SECSUITE/logblocker/temp"
+procfile='$tempdir/procfile.txt'
+procfile1='$tempdir/procfile1.txt'
+procfile2='$tempdir/procfile2.txt'
+procfile3='$tempdir/procfile3.txt'
+procfile4='$tempdir/procfile4.txt'
+procfile5='$tempdir/procfile5.txt'
 #ASCII Colours
 red='\033[0;31m'
 green='\033[0;32m'
