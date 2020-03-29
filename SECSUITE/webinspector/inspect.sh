@@ -46,6 +46,19 @@ nc='\033[0m'
 #
 cat $logfile >> $templogfile
 #
+echo ''
+while true; do
+    read -p "Have you already configured your Database Credentials? (y/n): " yn
+    case $yn in
+        [Yy]* ) echo "Skipping this step."; break;;
+        [Nn]* ) echo ""
+                read -p "Please enter the MySQL User: " mysqluser
+                read -s -p "$mysqluser's Password: " mysqlpass ; echo ""
+                break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+#
 #Database checks:
 #
 echo "Checking Database Configuration..."
@@ -118,10 +131,13 @@ sed -i "s/$thisyear:/$thisyear /g" $procfilethree
 #echo ""
 #echo "Index Viewers Data Sample:"
 #tail -5 $procfilethree
+#
 #-----------------------------------
+#
 cat $procfileone >> $importfileone
 cat $procfiletwo >> $importfiletwo
 cat $procfilethree >> $importfilethree
+#
 while true; do
     read -p "Do you wish to keep previous entries? (Y/n): " yn
     case $yn in
@@ -130,12 +146,12 @@ while true; do
         * ) echo "Please answer yes or no.";;
     esac
 done
-
+#
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfileone' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfiletwo' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfilethree' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
-
+#
 #Delete bulky files:
 rm $readfileone $procfileone $readfiletwo $procfiletwo $readfilethree $procfilethree $fileoneip $filetwoip $filethreeip $templogfile $importfileone $importfiletwo $importfilethree
-
+#
 exit
