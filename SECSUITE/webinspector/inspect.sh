@@ -26,6 +26,12 @@ importfileone="$importdir/fileone.csv"
 importfiletwo="$importdir/filetwo.csv"
 importfilethree="$importdir/filethree.csv"
 #
+#Block IPs (optional)
+outfile="/var/lib/mysql-files/webinspectblockraw.csv"
+ipfile="$basedir/ipfile.csv"
+procipfile="$basedir/procipfile.csv"
+procblockfile="$basedir/procblockipfile.csv"
+#
 #MySQL Credentials
 mysqluser="user"
 mysqlpass="pass"
@@ -64,7 +70,7 @@ done
 echo "Checking Database Configuration..."
 mysql --user=$mysqluser --password=$mysqlpass -e "CREATE DATABASE IF NOT EXISTS webinspector;" 2>/dev/null
 mysqlshow --user=$mysqluser --password=$mysqlpass webinspector >> $dbc1 2>/dev/null
-
+#
 if grep -q "inspection" "$dbc1"; then
         printf "${green}Table 'webinspector.inspection' exists, continuing...${nc}\n"
 fi
@@ -150,6 +156,54 @@ done
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfileone' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfiletwo' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfilethree' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
+#
+echo ''
+echo "IP addresses which attempted getting a 404 resources 3 times or more: "
+mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;select ipaddr from inspection where statuscode = '404' group by ipaddr having count(*) > 2;" 2>/dev/null
+#
+while true; do
+    read -p "Do you wish to block these IP addresses? (Y/n): " yn
+    case $yn in
+        [Yy]* ) mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;select ipaddr from inspection where statuscode = '404' group by ipaddr having count(*) > 2;" 2>/dev/null >> $outfile
+		cat $outfile | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | awk '{print $0}' >> $ipfile
+		#-----------------------------------
+		#Le Debug;
+		#echo ''
+		#echo "IP File Line Count:"
+		#cat $ipfile | wc -l
+		#End Debug;
+                #-----------------------------------
+		cat $ipfile >> $procipfile
+		#-----------------------------------
+                #Le Debug;
+		#echo ''
+		#echo "Processing IP File Line Count:"
+		#cat $procipfile | wc -l
+		#echo ''
+		#End Debug;
+                #-----------------------------------
+		file="$procipfile"
+		[ ! -f "$file" ] && { echo "Error: $procipfile file not found."; exit; }
+		if [ -s "$file" ]
+		then
+		echo "Preparing block script..."
+		cat $procipfile | awk '{print "ufw deny from",$1,"to any"}' >> $procblockfile
+		sed -i 's/: to/ to/g' $procblockfile
+		#-----------------------------------
+                #Le Debug;
+		#echo "Block File Contents:"
+		#cat $procblockfile
+		#echo ''
+		#End Debug;
+                #-----------------------------------
+		bash $procblockfile
+		rm $outfile $ipfile $procipfile $procblockfile
+		fi
+		break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
 #
 #Delete bulky files:
 rm $readfileone $procfileone $readfiletwo $procfiletwo $readfilethree $procfilethree $fileoneip $filetwoip $filethreeip $templogfile $importfileone $importfiletwo $importfilethree
