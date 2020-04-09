@@ -76,7 +76,7 @@ if grep -q "inspection" "$dbc1"; then
 fi
 if ! grep -q "inspection" "$dbc1"; then
         printf "${red}Table 'webinspector.inspection' Doesn't exist, Installing...${nc}\n"
-        mysql --user=$mysqluser --password=$mysqlpass -e "USE webinspector;CREATE TABLE inspection (id INT AUTO_INCREMENT NOT NULL, ipaddr VARCHAR(255) NOT NULL, logdate VARCHAR(255) NOT NULL, pagerequested VARCHAR(255) NOT NULL, statuscode INT NOT NULL, PRIMARY KEY (id));" 2>/dev/null
+        mysql --user=$mysqluser --password=$mysqlpass -e "USE webinspector;CREATE TABLE inspection (id INT AUTO_INCREMENT NOT NULL, ipaddr VARCHAR(255) NOT NULL, logdate VARCHAR(255) NOT NULL, pagerequested VARCHAR(255) NOT NULL, statuscode INT NOT NULL, useragent VARCHAR(255) NOT NULL, PRIMARY KEY (id));" 2>/dev/null
         mysqlshow --user=$mysqluser --password=$mysqlpass webinspector >> $dbc2 2>/dev/null
 	if grep -q "inspection" "$dbc2"; then
 	printf "${green}Table 'webinspector.inspection' has been created, continuing...${nc}\n"
@@ -86,6 +86,9 @@ fi
 rm $dbc1
 #
 #Search logs:
+#
+#Remove commas from source, because they fuck up the script later in the process.
+sed -i 's/\,//g' $templogfile
 #
 #Predetermined check for status 200;
 cat $templogfile | grep 'HTTP/1.1" 200' >> $readfileone
@@ -100,22 +103,25 @@ cat $readfiletwo | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|
 cat $readfilethree | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | awk '{print $0}' >> $filethreeip
 #
 #Process status 200
-cat $readfileone | awk -F " " '{ print $1 "," $4 "," $7 "," $9}' >> $procfileone
+cat $readfileone | awk -F " " '{ print $1 "," $4 "," $7 "," $9 "," $12 " - " $13 " " $14 " " $15 " " $16 " " $17 " " $18}' >> $procfileone
 #Format status 200
 sed -i 's/\[//g' $procfileone
 sed -i "s/$thisyear:/$thisyear /g" $procfileone
+sed -i "s/\"\-\" \-/N\/A/g" $procfileone
 #
 #Process status 404
-cat $readfiletwo | awk -F " " '{ print $1 "," $4 "," $7 "," $9}' >> $procfiletwo
+cat $readfiletwo | awk -F " " '{ print $1 "," $4 "," $7 "," $9 "," $12 " - " $13 " " $14 " " $15 " " $16 " " $17 " " $18}' >> $procfiletwo
 #Format status 404
 sed -i 's/\[//g' $procfiletwo
 sed -i "s/$thisyear:/$thisyear /g" $procfiletwo
+sed -i "s/\"\-\" \-/N\/A/g" $procfiletwo
 #
 #Process index viewers
-cat $readfilethree | awk -F " " '{ print $1 "," $4 "," $7 "," $9}' >> $procfilethree
+cat $readfilethree | awk -F " " '{ print $1 "," $4 "," $7 "," $9 "," $12 " - " $13 " " $14 " " $15 " " $16 " " $17 " " $18}' >> $procfilethree
 #Format status 404
 sed -i 's/\[//g' $procfilethree
 sed -i "s/$thisyear:/$thisyear /g" $procfilethree
+sed -i "s/\"\-\" \-/N\/A/g" $procfilethree
 #
 #Le Debugging;
 #-----------------------------------
@@ -153,9 +159,9 @@ while true; do
     esac
 done
 #
-mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfileone' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
-mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfiletwo' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
-mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfilethree' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode);" 2>/dev/null
+mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfileone' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode, useragent);" 2>/dev/null
+mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfiletwo' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode, useragent);" 2>/dev/null
+mysql --user="$mysqluser" --password="$mysqlpass" -e "USE webinspector;LOAD DATA INFILE '$importfilethree' INTO TABLE inspection FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (ipaddr, logdate, pagerequested, statuscode, useragent);" 2>/dev/null
 #
 echo ''
 echo "IP addresses which attempted getting a 404 resources 3 times or more: "
