@@ -110,8 +110,9 @@ if ! grep -q "apachestatus" "$dbf"; then
         printf "+ The new ID has been generated: ${green} $i ${nc}\n"
         rm $dbid
 	fi
+rm $dbf1
 fi
-rm $dbf $dbf1
+rm $dbf
 echo "Checking Historical Database Configuration..."
 mysqlshow --user=$mysqluser --password=$mysqlpass status >> $dbf 2>/dev/null
 if grep -q "hist_apachestatus" "$dbf"; then
@@ -132,15 +133,17 @@ if ! grep -q "hist_apachestatus" "$dbf"; then
 	if grep -q "hist_apachestatus" "$dbf1"; then
         printf "${green}Table 'status.hist_apachestatus' has been created, continuing...${nc}\n"
 	fi
+rm $dbf1
 fi
-rm $dbf $dbf1
+rm $dbf
 #
 echo "Building script..."
 echo 'if grep -q "active (running)" "$ statusfile"; then' >> $constructfile
 echo 'cat $ statusfile | grep -E "Active" > $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
-echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
+echo "sed -i '1 i\ $i,$hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
+echo "sed -i 's/   Active/Active/g' /var/lib/mysql-files/importapachestatus.csv" >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> $qry1
 echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> $qry1
 echo '" 2>/dev/null' >> $qry1
@@ -153,7 +156,7 @@ echo 'fi' >> $constructfile
 echo 'if grep -q "inactive (dead)" "$ statusfile"; then' >> $constructfile
 echo 'echo "Apache Server is Offline!" >> $ statusfile1' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "use status;truncate table apachestatus;" 2>/dev/null' >> $constructfile
-echo "sed -i '1 i\ $i, $hostname,' $ statusfile1" >> $constructfile
+echo "sed -i '1 i\ $i,$hostname,' $ statusfile1" >> $constructfile
 echo 'tr -d "\n\r" < $ statusfile1 > /var/lib/mysql-files/importapachestatus.csv' >> $constructfile
 echo 'mysql --user=$ mysqluser --password=$ mysqlpass -e "USE status;LOAD DATA INFILE ' >> $qry1
 echo "'/var/lib/mysql-files/importapachestatus.csv' INTO TABLE apachestatus FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';" >> $qry1
