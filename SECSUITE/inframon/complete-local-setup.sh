@@ -17,19 +17,20 @@ if grep -q dialog "dialogcheck.txt"; then
 fi
 
 HEIGHT=15
-WIDTH=50
+WIDTH=75
 CHOICE_HEIGHT=8
 BACKTITLE="SECSUITE INFRAMON INSTALLER CONSOLE -- SESSION STARTED AT: $(date)"
-TITLE="SECSUITE BETA Release v0.01 (Inframon Installers)"
+TITLE="SECSUITE BETA Release v3.24420 (Inframon Installers)"
 MENU="MENU OPTIONS: "
 
 OPTIONS=(1 "Configure Apache Monitor"
-         2 "Configure CPU Load Monitor"
-         3 "Configure New Node CPU Monitor"
-         4 "Configure Network Latency Monitor"
-         5 "Configure CPU Temperature Monitor"
-         6 "Configure Dashboard (BETA)"
-         7 "Configure New Remote Node")
+         2 "Configure Bandwidth Monitor"
+	 3 "Configure CPU Load Monitor"
+	 4 "Configure Disk Monitor"
+	 5 "Configure Memory Monitor"
+         6 "Configure Network Latency Monitor"
+         7 "Configure CPU Temperature Monitor"
+         8 "Configure New Remote Node")
 
 CHOICE=$(dialog --clear \
                 --backtitle "$BACKTITLE" \
@@ -46,20 +47,19 @@ case $CHOICE in
         bash /root/scripts/SECSUITE/inframon/apache-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
+        #
         if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
         fi
         ;;
 
-        2)
+	2)
 
-        bash /root/scripts/SECSUITE/inframon/cpu-load-average-monitor-installer-local.sh
-
-        read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
-        if [[ $REPLY =~ ^[Yy]$ ]]
+	bash /root/scripts/SECSUITE/inframon/bandwidth-monitor-installer-local.sh
+	#
+	read -p "Would you like to return to the console? (y/n):  " -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
         fi
@@ -67,34 +67,34 @@ case $CHOICE in
 
         3)
 
-        bash /root/scripts/SECSUITE/inframon/cpu-load-new-node-installer-local.sh
+        bash /root/scripts/SECSUITE/inframon/cpu-load-average-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
+        #
         if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
         fi
         ;;
 
-        4)
+	4)
 
-        bash /root/scripts/SECSUITE/inframon/latency-monitor-installer-local.sh
+	bash /root/scripts/SECSUITE/inframon/disk-usage-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
+        #
         if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
         fi
         ;;
 
-        5)
-        
-        bash /root/scripts/SECSUITE/inframon/temperature-monitor-installer-local.sh
+	5)
+
+	bash /root/scripts/SECSUITE/inframon/memory-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
+        #
         if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
@@ -103,10 +103,10 @@ case $CHOICE in
 
         6)
 
-        echo "This feature is currently in development."
+        bash /root/scripts/SECSUITE/inframon/latency-monitor-installer-local.sh
 
         read -p "Would you like to return to the console? (y/n):  " -n 1 -r
-        echo #
+        #
         if [[ $REPLY =~ ^[Yy]$ ]]
         then
         bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
@@ -114,6 +114,18 @@ case $CHOICE in
         ;;
 
         7)
+
+        bash /root/scripts/SECSUITE/inframon/temperature-monitor-installer-local.sh
+
+        read -p "Would you like to return to the console? (y/n):  " -n 1 -r
+        #
+        if [[ $REPLY =~ ^[Yy]$ ]]
+        then
+        bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
+        fi
+        ;;
+
+        8)
 
         while true; do
             read -p "Do you wish to store the monitoring data locally on this server (Y) or on the node itself (N)? (Y/n): " yn
@@ -123,5 +135,13 @@ case $CHOICE in
                 * ) echo "Please answer yes or no.";;
             esac
         done
+
+	read -p "Would you like to return to the console? (y/n):  " -n 1 -r
+        #
+        if [[ $REPLY =~ ^[Yy]$ ]]
+        then
+        bash /root/scripts/SECSUITE/inframon/complete-local-setup.sh
+        fi
         ;;
+
 esac
