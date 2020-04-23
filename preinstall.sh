@@ -45,6 +45,50 @@ if [ -d "$basedir/inframon/apachestatus/" ]; then
         fi
 fi
 
+if [ -d "$basedir/inframon/bandwidth/" ]; then
+        printf " -> $basedir/inframon/bandwidth/ ${green}✓${nc}\n"
+    else
+        printf " -> $basedir/inframon/bandwidth/ ${red}X${nc}\n"
+        printf "+ Creating $basedir/inframon/bandwidth/ (base directory)\n"
+        mkdir $basedir/inframon/bandwidth/
+        if [ -d "$basedir/inframon/bandwidth/" ]; then
+                printf " -> $basedir/inframon/bandwidth/ ${green}✓${nc}\n"
+        fi
+fi
+
+if [ -d "$basedir/inframon/cpufiles/" ]; then
+        printf " -> $basedir/inframon/cpufiles/ ${green}✓${nc}\n"
+    else
+        printf " -> $basedir/inframon/cpufiles/ ${red}X${nc}\n"
+        printf "+ Creating $basedir/inframon/cpufiles/ (base directory)\n"
+        mkdir $basedir/inframon/cpufiles/
+        if [ -d "$basedir/inframon/cpufiles/" ]; then
+                printf " -> $basedir/inframon/cpufiles/ ${green}✓${nc}\n"
+        fi
+fi
+
+if [ -d "$basedir/inframon/diskusage/" ]; then
+        printf " -> $basedir/inframon/diskusage/ ${green}✓${nc}\n"
+    else
+        printf " -> $basedir/inframon/diskusage/ ${red}X${nc}\n"
+        printf "+ Creating $basedir/inframon/diskusage/ (base directory)\n"
+        mkdir $basedir/inframon/diskusage/
+        if [ -d "$basedir/inframon/diskusage/" ]; then
+                printf " -> $basedir/inframon/diskusage/ ${green}✓${nc}\n"
+        fi
+fi
+
+if [ -d "$basedir/inframon/memory/" ]; then
+        printf " -> $basedir/inframon/memory/ ${green}✓${nc}\n"
+    else
+        printf " -> $basedir/inframon/memory/ ${red}X${nc}\n"
+        printf "+ Creating $basedir/inframon/memory/ (base directory)\n"
+        mkdir $basedir/inframon/memory/
+        if [ -d "$basedir/inframon/memory/" ]; then
+                printf " -> $basedir/inframon/memory/ ${green}✓${nc}\n"
+        fi
+fi
+
 if [ -d "$basedir/inframon/tempfiles/" ]; then
         printf " -> $basedir/inframon/tempfiles/ ${green}✓${nc}\n"
     else
@@ -75,18 +119,6 @@ if [ -d "$basedir/inframon/latency-files/" ]; then
         mkdir $basedir/inframon/latency-files/
         if [ -d "$basedir/inframon/latency-files/" ]; then
                 printf " -> $basedir/inframon/latency-files/ ${green}✓${nc}\n"
-        fi
-fi
-
-
-if [ -d "$basedir/inframon/cpufiles/" ]; then
-        printf " -> $basedir/inframon/cpufiles/ ${green}✓${nc}\n"
-    else
-        printf " -> $basedir/inframon/cpufiles/ ${red}X${nc}\n"
-        printf "+ Creating $basedir/inframon/cpufiles/inframon/cpufiles/ (base directory)\n"
-        mkdir $basedir/inframon/cpufiles/
-        if [ -d "$basedir/inframon/cpufiles/" ]; then
-                printf " -> $basedir/inframon/cpufiles/ ${green}✓${nc}\n"
         fi
 fi
 
