@@ -126,6 +126,3 @@ sed -i 's/$ mysqlpass/$mysqlpass/g' $script
 #
 echo "SQL Imported Data:"
 mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status; SELECT * FROM memorystatus;" 2>/dev/null
-#echo "Dropping table..."
-#mysql --user="$mysqluser" --password="$mysqlpass" -e "USE status; DROP TABLE memorystatus;" 2>/dev/null
-#
