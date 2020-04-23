@@ -66,4 +66,4 @@ To install Inframon, execute "SECSUITE/inframon/complete-local-setup.sh"; You wi
 
 - Installation Scripts to aid the installation & configuration of local & remote hosts for all programs.
 
-Ensure to place SECSUITE/* in the directory: /root/scripts/SECSUITE/*
+Once you have cloned this repo, execute the script "preinstall.sh" and follow the white rabbit. Enjoy Secsuite.
